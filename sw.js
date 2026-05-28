@@ -3,7 +3,7 @@
 // Version 1.0.155 — two-phase share + single link + html2canvas guard + Firebase SW fix. bump CACHE_VERSION on each release
 // ============================================================
 
-const CACHE_VERSION = 'wnext-weathernextformanchis-202605280140';
+const CACHE_VERSION = 'wnext-weathernextformanchis-202605281730';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const WEATHER_CACHE = `${CACHE_VERSION}-weather`;

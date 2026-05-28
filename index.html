@@ -1638,6 +1638,29 @@
             // locations in the same way; broadcast sort falls back to lat/lng
             // order which works fine when there are only a few locations.
         };
+
+        // Explicit broadcast display order (Manchis build).
+        // ------------------------------------------------------------
+        // Manchis is the main town; Kampung Ponson and Batu 36 are farm-only
+        // stops further out along the same road. Recipients should read the
+        // report in travel order from town outward — Manchis → Kampung Ponson
+        // → Batu 36 — NOT in the raw north-to-south latitude order the generic
+        // geographic sort would produce (which puts Batu 36 first).
+        //
+        // Any id listed here sorts by its number (ascending) ahead of the
+        // geographic fallback. Locations NOT listed here (e.g. farms the user
+        // adds later) get index 999 and fall through to the existing lat/lng
+        // ordering among themselves, after the explicitly-ordered ones.
+        //
+        // Scope: this affects the "All Stable" / "All Stable Hourly" broadcasts
+        // only. The "Favorites" broadcast intentionally preserves the user's own
+        // favorite/unfavorite order — recipients of that report follow whatever
+        // sequence the broadcaster chose by pinning, not this fixed road order.
+        const BROADCAST_ORDER = {
+            'c_mc-manchis': 1,
+            'c_mc-ponson':  2,
+            'c_mc-batu36':  3
+        };
         
         // State display order: northernmost West-coast first, then peninsula
         // working south, then East Malaysia with Sarawak before Sabah.
@@ -1661,6 +1684,15 @@
             for (const loc of STABLE_LOCATIONS) byId[loc.id] = loc;
             
             return ids.slice().sort((a, b) => {
+                // 1. Explicit broadcast order takes precedence (Manchis build).
+                //    Runs before the byId lookup below so it works even though
+                //    STABLE_LOCATIONS is empty in this build (all farms live in
+                //    customLocations). Unlisted ids get 999 and sort after the
+                //    explicitly-ordered ones, then fall through to geography.
+                const ordA = BROADCAST_ORDER[a] || 999;
+                const ordB = BROADCAST_ORDER[b] || 999;
+                if (ordA !== ordB) return ordA - ordB;
+
                 const locA = byId[a]; const locB = byId[b];
                 if (!locA || !locB) return 0;
                 
@@ -1911,7 +1943,7 @@
         // unless SEED_VERSION is bumped in a future build.
         // ============================================================
         (function seedCompanyLocations() {
-            var SEED_VERSION = '1';
+            var SEED_VERSION = '2';
             var SEED_FLAG_KEY = 'weathernextformanchis__wnext_company_seed_version';
             var CUSTOM_KEY = 'weathernextformanchis__wnext_v41_custom_store';
             var FAV_KEY = 'weathernextformanchis__wnext_v41_favs_store';
@@ -1930,7 +1962,7 @@
                     localStorage.setItem(NAME_KEY, "Stanley Woo");
                     localStorage.setItem(NAME_ASCII_KEY, "StanleyWoo");
                 }
-                var seedLocs = [{"id": "c_mc-manchis", "en": "Manchis", "zh": "文积", "lat": 3.205, "lng": 102.164, "t": 0, "p": 0, "em": false}];
+                var seedLocs = [{"id": "c_mc-manchis", "en": "Manchis", "zh": "文积", "lat": 3.205, "lng": 102.164, "t": 0, "p": 0, "em": false}, {"id": "c_mc-ponson", "en": "Kampung Ponson - Gan Ming Keong", "zh": "Manchis - 颜明强", "lat": 3.229722, "lng": 102.156111, "t": 0, "p": 0, "em": false}, {"id": "c_mc-batu36", "en": "Batu 36", "zh": "三十六碑", "lat": 3.240556, "lng": 102.141111, "t": 0, "p": 0, "em": false}];
                 // Merge into whatever is already there (e.g. a deep-link
                 // location the user received before first cold start).
                 var existing = [];
@@ -1985,7 +2017,7 @@
                     favs = rawF ? (JSON.parse(rawF) || []) : [];
                     if (!Array.isArray(favs)) favs = [];
                 } catch (e) { favs = []; }
-                var seedIds = ["c_mc-manchis"];
+                var seedIds = ["c_mc-manchis", "c_mc-ponson", "c_mc-batu36"];
                 seedIds.forEach(function (id) {
                     if (favs.indexOf(id) === -1) favs.push(id);
                 });
