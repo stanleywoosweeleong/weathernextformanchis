@@ -1943,7 +1943,7 @@
         // unless SEED_VERSION is bumped in a future build.
         // ============================================================
         (function seedCompanyLocations() {
-            var SEED_VERSION = '3';
+            var SEED_VERSION = '4';
             var SEED_FLAG_KEY = 'weathernextformanchis__wnext_company_seed_version';
             var CUSTOM_KEY = 'weathernextformanchis__wnext_v41_custom_store';
             var FAV_KEY = 'weathernextformanchis__wnext_v41_favs_store';
@@ -1962,7 +1962,7 @@
                     localStorage.setItem(NAME_KEY, "Stanley Woo");
                     localStorage.setItem(NAME_ASCII_KEY, "StanleyWoo");
                 }
-                var seedLocs = [{"id": "c_mc-manchis", "en": "Manchis", "zh": "文积", "lat": 3.205, "lng": 102.164, "t": 0, "p": 0, "em": false}, {"id": "c_mc-ponson", "en": "KG. PONSON - Gan Ming Keong", "zh": "Manchis - 颜明强", "lat": 3.229722, "lng": 102.156111, "t": 0, "p": 0, "em": false}, {"id": "c_mc-batu36", "en": "Batu 36", "zh": "三十六碑", "lat": 3.240556, "lng": 102.141111, "t": 0, "p": 0, "em": false}];
+                var seedLocs = [{"id": "c_mc-manchis", "en": "Manchis", "zh": "文积", "lat": 3.205, "lng": 102.164, "t": 0, "p": 0, "em": false}, {"id": "c_mc-ponson", "en": "Kg. Ponson - Gan Ming Keong", "zh": "彭顺村 - 颜明强", "lat": 3.229722, "lng": 102.156111, "t": 0, "p": 0, "em": false}, {"id": "c_mc-batu36", "en": "Batu 36", "zh": "三十六碑", "lat": 3.240556, "lng": 102.141111, "t": 0, "p": 0, "em": false}];
                 // Merge into whatever is already there (e.g. a deep-link
                 // location the user received before first cold start).
                 var existing = [];
@@ -1977,46 +1977,58 @@
                     if (!haveIds[l.id]) existing.push(l);
                 });
                 localStorage.setItem(CUSTOM_KEY, JSON.stringify(existing));
-                // --- SEED v2 name migration -------------------------------
-                // Rewrites auto-seeded English names that have since been
-                // changed in a later build, but ONLY when the stored value
-                // still equals a known old auto-seeded string — so a farmer's
-                // own Edit Name choice is never overwritten. The merge above
-                // only ADDS missing farms; it can't rename an existing one, so
-                // this block handles renames for devices that already seeded.
+                // --- Seed name migration ----------------------------------
+                // Rewrites auto-seeded names (English and/or Chinese) that have
+                // since been changed in a later build, but ONLY when the stored
+                // value still equals a known old auto-seeded string — so a
+                // farmer's own Edit Name choice is never overwritten. The merge
+                // above only ADDS missing farms; it can't rename an existing
+                // one, so this block handles renames for devices that already
+                // seeded under an earlier SEED_VERSION.
                 //
-                // v3 rename: "Kampung Ponson - Gan Ming Keong" → "KG. PONSON - Gan Ming Keong"
+                // v4 rename (Kg. Ponson):
+                //   EN: "Kampung Ponson - Gan Ming Keong" (v2)  -> "Kg. Ponson - Gan Ming Keong"
+                //       "KG. PONSON - Gan Ming Keong"     (v3)  -> "Kg. Ponson - Gan Ming Keong"
+                //   ZH: "Manchis - 颜明强"                (v2/v3) -> "彭顺村 - 颜明强"
                 try {
                     var NAME_MIGRATIONS = [
                         {
                             id: "c_mc-ponson",
-                            oldNames: ["Kampung Ponson - Gan Ming Keong"],
-                            newName: "KG. PONSON - Gan Ming Keong"
+                            oldEn: ["Kampung Ponson - Gan Ming Keong", "KG. PONSON - Gan Ming Keong"],
+                            newEn: "Kg. Ponson - Gan Ming Keong",
+                            oldZh: ["Manchis - 颜明强"],
+                            newZh: "彭顺村 - 颜明强"
                         }
                     ];
+                    var applyMig = function (obj, m) {
+                        var changed = false;
+                        if (m.oldEn && obj.en && m.oldEn.indexOf(obj.en) !== -1) {
+                            obj.en = m.newEn; changed = true;
+                        }
+                        if (m.oldZh && obj.zh && m.oldZh.indexOf(obj.zh) !== -1) {
+                            obj.zh = m.newZh; changed = true;
+                        }
+                        return changed;
+                    };
                     var custMig = JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]");
                     if (Array.isArray(custMig)) {
                         var migrated = false;
                         custMig.forEach(function (l) {
                             if (!l || !l.id) return;
                             NAME_MIGRATIONS.forEach(function (m) {
-                                if (l.id === m.id && m.oldNames.indexOf(l.en) !== -1) {
-                                    l.en = m.newName; migrated = true;
-                                }
+                                if (l.id === m.id && applyMig(l, m)) migrated = true;
                             });
                         });
                         if (migrated) localStorage.setItem(CUSTOM_KEY, JSON.stringify(custMig));
                     }
-                    // Also clear a stale rename-store entry if it still holds an
+                    // Also fix a stale rename-store entry if it still holds an
                     // old auto-seeded name (the rename store overrides the
                     // custom store when the app renders names).
                     var renMig = JSON.parse(localStorage.getItem(RENAME_KEY) || "{}");
                     if (renMig) {
                         var renChanged = false;
                         NAME_MIGRATIONS.forEach(function (m) {
-                            if (renMig[m.id] && m.oldNames.indexOf(renMig[m.id].en) !== -1) {
-                                renMig[m.id].en = m.newName; renChanged = true;
-                            }
+                            if (renMig[m.id] && applyMig(renMig[m.id], m)) renChanged = true;
                         });
                         if (renChanged) localStorage.setItem(RENAME_KEY, JSON.stringify(renMig));
                     }
