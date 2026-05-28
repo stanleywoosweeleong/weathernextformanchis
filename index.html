@@ -1943,7 +1943,7 @@
         // unless SEED_VERSION is bumped in a future build.
         // ============================================================
         (function seedCompanyLocations() {
-            var SEED_VERSION = '2';
+            var SEED_VERSION = '3';
             var SEED_FLAG_KEY = 'weathernextformanchis__wnext_company_seed_version';
             var CUSTOM_KEY = 'weathernextformanchis__wnext_v41_custom_store';
             var FAV_KEY = 'weathernextformanchis__wnext_v41_favs_store';
@@ -1962,7 +1962,7 @@
                     localStorage.setItem(NAME_KEY, "Stanley Woo");
                     localStorage.setItem(NAME_ASCII_KEY, "StanleyWoo");
                 }
-                var seedLocs = [{"id": "c_mc-manchis", "en": "Manchis", "zh": "文积", "lat": 3.205, "lng": 102.164, "t": 0, "p": 0, "em": false}, {"id": "c_mc-ponson", "en": "Kampung Ponson - Gan Ming Keong", "zh": "Manchis - 颜明强", "lat": 3.229722, "lng": 102.156111, "t": 0, "p": 0, "em": false}, {"id": "c_mc-batu36", "en": "Batu 36", "zh": "三十六碑", "lat": 3.240556, "lng": 102.141111, "t": 0, "p": 0, "em": false}];
+                var seedLocs = [{"id": "c_mc-manchis", "en": "Manchis", "zh": "文积", "lat": 3.205, "lng": 102.164, "t": 0, "p": 0, "em": false}, {"id": "c_mc-ponson", "en": "KG. PONSON - Gan Ming Keong", "zh": "Manchis - 颜明强", "lat": 3.229722, "lng": 102.156111, "t": 0, "p": 0, "em": false}, {"id": "c_mc-batu36", "en": "Batu 36", "zh": "三十六碑", "lat": 3.240556, "lng": 102.141111, "t": 0, "p": 0, "em": false}];
                 // Merge into whatever is already there (e.g. a deep-link
                 // location the user received before first cold start).
                 var existing = [];
@@ -1978,22 +1978,32 @@
                 });
                 localStorage.setItem(CUSTOM_KEY, JSON.stringify(existing));
                 // --- SEED v2 name migration -------------------------------
-                // Carried over from the WeatherNext template. The Manchis
-                // build seeds a single farm ("Manchis") with a fresh id and
-                // has no legacy auto-seeded names to rewrite, so OLD_EN_NAMES
-                // is intentionally empty — this block is a safe no-op here and
-                // is kept only so future name migrations have a home.
+                // Rewrites auto-seeded English names that have since been
+                // changed in a later build, but ONLY when the stored value
+                // still equals a known old auto-seeded string — so a farmer's
+                // own Edit Name choice is never overwritten. The merge above
+                // only ADDS missing farms; it can't rename an existing one, so
+                // this block handles renames for devices that already seeded.
+                //
+                // v3 rename: "Kampung Ponson - Gan Ming Keong" → "KG. PONSON - Gan Ming Keong"
                 try {
-                    var OLD_EN_NAMES = [];
-                    var NEW_EN = "Manchis";
-                    var SEED_FARM_ID = "c_mc-manchis";
+                    var NAME_MIGRATIONS = [
+                        {
+                            id: "c_mc-ponson",
+                            oldNames: ["Kampung Ponson - Gan Ming Keong"],
+                            newName: "KG. PONSON - Gan Ming Keong"
+                        }
+                    ];
                     var custMig = JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]");
                     if (Array.isArray(custMig)) {
                         var migrated = false;
                         custMig.forEach(function (l) {
-                            if (l && l.id === SEED_FARM_ID && OLD_EN_NAMES.indexOf(l.en) !== -1) {
-                                l.en = NEW_EN; migrated = true;
-                            }
+                            if (!l || !l.id) return;
+                            NAME_MIGRATIONS.forEach(function (m) {
+                                if (l.id === m.id && m.oldNames.indexOf(l.en) !== -1) {
+                                    l.en = m.newName; migrated = true;
+                                }
+                            });
                         });
                         if (migrated) localStorage.setItem(CUSTOM_KEY, JSON.stringify(custMig));
                     }
@@ -2001,10 +2011,14 @@
                     // old auto-seeded name (the rename store overrides the
                     // custom store when the app renders names).
                     var renMig = JSON.parse(localStorage.getItem(RENAME_KEY) || "{}");
-                    if (renMig && renMig[SEED_FARM_ID] &&
-                        OLD_EN_NAMES.indexOf(renMig[SEED_FARM_ID].en) !== -1) {
-                        renMig[SEED_FARM_ID].en = NEW_EN;
-                        localStorage.setItem(RENAME_KEY, JSON.stringify(renMig));
+                    if (renMig) {
+                        var renChanged = false;
+                        NAME_MIGRATIONS.forEach(function (m) {
+                            if (renMig[m.id] && m.oldNames.indexOf(renMig[m.id].en) !== -1) {
+                                renMig[m.id].en = m.newName; renChanged = true;
+                            }
+                        });
+                        if (renChanged) localStorage.setItem(RENAME_KEY, JSON.stringify(renMig));
                     }
                 } catch (e) { console.warn('[company-seed] name migration skipped', e); }
                 // ----------------------------------------------------------
