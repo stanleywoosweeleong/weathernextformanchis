@@ -38,8 +38,15 @@ build:
 
 ### Broadcast & correctness improvements (shared with the Raub build)
 
-- **GPS broadcast sort** — the WhatsApp broadcast lists farms NORTH→SOUTH then
-  WEST→EAST, across all three broadcast modes.
+- **Broadcast sort (Manchis convention)** — the WhatsApp broadcast lists the
+  three seeded farms in road order from town outward: **Manchis → Kg. Ponson
+  → Batu 36**. This is the one Manchis-specific deviation from the Raub build's
+  pure-GPS NORTH→SOUTH/WEST→EAST broadcast sort. The reason: Manchis town is
+  where the broadcast audience lives, and Kg. Ponson + Batu 36 are pure
+  work-farms further along the same road, so the natural reading order is
+  "home, then the next stop, then the next" rather than top-of-the-map down.
+  Any farm a user adds later that isn't one of the seeded three falls through
+  to the GPS geographic sort and appears beneath them.
 - **Storm-confidence wording** — the storm line carries a single bracketed
   confidence tag (`（较确定）` when models agree, `（不确定）` otherwise); the
   old "models agree / uncertain" contradiction is gone.
@@ -147,7 +154,7 @@ The service worker caches the app shell. When you push changes, bump the
 their next visit. The current value is:
 
 ```
-wnext-weathernextformanchis-202606041225
+wnext-weathernextformanchis-202606050900
 ```
 
 ---

@@ -1996,15 +1996,36 @@
             return nameA.localeCompare(nameB);
         };
 
+        // Explicit broadcast order override (Manchis build).
+        // ------------------------------------------------------------
+        // Manchis is the home town — most farmers in the broadcast audience
+        // live there, with Kg. Ponson and Batu 36 being pure work-farm stops
+        // further along the same road. The recipients read the report
+        // "starting from where I am, outward", NOT north-to-south. So for these
+        // three seeded ids we pin an explicit reading order ahead of the
+        // pure-GPS sort. Any id NOT listed here gets index 999 and falls
+        // through to broadcastGeoSort, so user-added farms still appear in
+        // geographic order beneath the seeded three. This is the only Manchis
+        // deviation from the Raub broadcast-sort convention.
+        const BROADCAST_ORDER = {
+            'c_mc-manchis': 1,
+            'c_mc-ponson':  2,
+            'c_mc-batu36':  3
+        };
+
         const sortStableLocations = (ids) => {
-            // Broadcast listing order uses the dedicated pure-GPS geographic sort
-            // (NORTH→SOUTH, then WEST→EAST) so the WhatsApp report matches the old
-            // Raub ordering the audience knows. Resolved via getAllLocations() (not
+            // Broadcast listing order. First honours the explicit BROADCAST_ORDER
+            // map above (Manchis → Kg. Ponson → Batu 36), then falls through to
+            // the dedicated pure-GPS geographic sort (NORTH→SOUTH, then WEST→EAST)
+            // for anything not in the map. Resolved via getAllLocations() (not
             // just STABLE_LOCATIONS) so user-added farms are ordered too.
             const all = (typeof getAllLocations === 'function') ? getAllLocations() : [];
             const byId = {};
             for (const loc of all) byId[loc.id] = loc;
             return ids.slice().sort((a, b) => {
+                const ordA = BROADCAST_ORDER[a] || 999;
+                const ordB = BROADCAST_ORDER[b] || 999;
+                if (ordA !== ordB) return ordA - ordB;
                 const locA = byId[a]; const locB = byId[b];
                 if (!locA || !locB) return 0;
                 return broadcastGeoSort(locA, locB);
