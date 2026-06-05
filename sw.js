@@ -11,9 +11,28 @@
 // wnext-ag-v41-weathernextformanchis, name Stanley Woo, 3 seed farms (Manchis /
 // Kg. Ponson / Batu 36, c_mc- IDs preserved), seed version mc-arch1.
 // bump CACHE_VERSION on each release
+// ------------------------------------------------------------
+// BROADCAST CLARITY PORT (from Raub v1.3.0–v1.3.14, applied 2026-06-05):
+// the WhatsApp broadcast text builder (buildBroadcastText) was replaced wholesale
+// with the refined Raub version. Manchis's own GPS sort order, seed farms,
+// namespace, appId and all other code are UNCHANGED — only the broadcast text
+// logic was swapped. Fixes carried over:
+//   • Fog tag gated to the broadcast window (no warning about an already-past dawn)
+//   • Fog rendered in the location's language + Malay, never the greeting choice
+//   • Fog tag placed BEFORE the afternoon storm clause (dawn→afternoon order)
+//   • Favourites day-1 capped at 23:00 (no double-listing tomorrow's small hours)
+//   • Afternoon midnight-crossover note ("12am 之后为明天预报")
+//   • 🌫️ and 🕛 emoji removed (blank-box on older device OSes); 📍 kept
+//   • Single-language Malay hourly labels now render in Malay
+//   • Thin-rain reconciliation ("可能有丝丝细雨 / Possible drizzle / Mungkin hujan
+//     merintik-rintik") instead of a contradictory "no rain"
+//   • Confidence marker states WHAT models agree on ("模型一致：很可能有雨 / 大致无雨")
+//   • Contradiction sweep: past-storm suppression, probability floored to the
+//     measurable-hour signal, trace tag suppressed when a real rain hour exists
+// bump CACHE_VERSION on each release
 // ============================================================
 
-const CACHE_VERSION = 'wnext-weathernextformanchis-202606050900';
+const CACHE_VERSION = 'wnext-weathernextformanchis-202606051930';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const WEATHER_CACHE = `${CACHE_VERSION}-weather`;
