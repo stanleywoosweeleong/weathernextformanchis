@@ -40,7 +40,7 @@
 // / Dense fog in the morning / Kabus tebal waktu pagi). Manchis identity
 // (weathernextformanchis, road-sequence All-Stable sort) unchanged.
 
-const CACHE_VERSION = 'wnext-weathernextformanchis-202606081800';
+const CACHE_VERSION = 'wnext-weathernextformanchis-202606091240';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const WEATHER_CACHE = `${CACHE_VERSION}-weather`;
